@@ -39,6 +39,7 @@ func Test(t *testing.T) {
 		{0, []Point{{-1, -2}, {1, 2}}, 0},
 		{0, []Point{{-1, 0}, {1, 4}}, 2},
 		{1, []Point{{-1, 0}, {1, 4}}, 4},
+		{1.1, []Point{{-1, 0}, {1, 4}, {2, 10}}, 4 + 0.1*6},
 		{-1, []Point{{-1, 0}, {1, 4}}, 0},
 	}
 
@@ -52,5 +53,23 @@ func Test(t *testing.T) {
 				t.Errorf("not valid Y: %v", y)
 			}
 		})
+	}
+}
+
+func TestErrorDataset(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		err := ErrorDataset{Id: DatasetErrorValue(i)}
+		if len(err.Error()) == 0 {
+			t.Errorf("not enought error information for : %d", i)
+		}
+	}
+}
+
+func TestErrorRange(t *testing.T) {
+	for _, b := range []bool{false, true} {
+		err := ErrorRange{IsUpper: b}
+		if len(err.Error()) == 0 {
+			t.Errorf("not enought error information for : %v", b)
+		}
 	}
 }
