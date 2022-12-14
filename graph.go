@@ -7,6 +7,16 @@ type Point struct {
 	X, Y float64
 }
 
+// Swap points coordinates
+func Swap(ps ...Point) (swap []Point) {
+	swap = make([]Point, len(ps))
+	copy(swap, ps)
+	for i := range swap {
+		swap[i].X, swap[i].Y = swap[i].Y, swap[i].X
+	}
+	return
+}
+
 // Find position Y by X in grapth dataset data.
 // Dataset must by sorted by x.
 func Find(x float64, data ...Point) (y float64, err error) {

@@ -30,17 +30,28 @@ func TestWrong(t *testing.T) {
 }
 
 func Test(t *testing.T) {
-	tcs := []struct {
+	type testCase struct {
 		x       float64
 		data    []Point
 		yExpect float64
-	}{
+	}
+	tcs := []testCase{
 		{0, []Point{{0, 2}}, 2},
 		{0, []Point{{-1, -2}, {1, 2}}, 0},
 		{0, []Point{{-1, 0}, {1, 4}}, 2},
 		{1, []Point{{-1, 0}, {1, 4}}, 4},
 		{1.1, []Point{{-1, 0}, {1, 4}, {2, 10}}, 4 + 0.1*6},
 		{-1, []Point{{-1, 0}, {1, 4}}, 0},
+	}
+
+	for iter := 0; iter < 2; iter++ {
+		// swap tests
+		for i, size := 0, len(tcs); i < size; i++ {
+			var t testCase
+			t.x, t.yExpect = tcs[i].yExpect, tcs[i].x
+			t.data = Swap(tcs[i].data...)
+			tcs = append(tcs, t)
+		}
 	}
 
 	for i := range tcs {
