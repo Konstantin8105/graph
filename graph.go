@@ -18,8 +18,8 @@ func Swap(ps ...Point) (swap []Point) {
 }
 
 // Find position Y by X in grapth dataset data.
-// Dataset must by sorted by x.
-func Find(x float64, data ...Point) (y float64, err error) {
+// Dataset shall by sorted by x.
+func Find(x float64, withOutside bool, data ...Point) (y float64, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("graph.Find error: %v", err)
@@ -36,12 +36,17 @@ func Find(x float64, data ...Point) (y float64, err error) {
 			return
 		}
 	}
-	if len(data) == 0 {
+	if len(data) < 2 {
 		err = ErrorDataset{Id: NotEnougthData}
 		return
 	}
 	// check is X inside graph
 	if x < data[0].X {
+		if withOutside {
+			x0, y0 := data[0].X, data[0].Y
+			x1, y1 := data[1].X, data[1].Y
+			return y0 + (x-x0)/(x1-x0)*(y1-y0), nil
+		}
 		err = ErrorRange{
 			IsUpper: false,
 			X:       x,
@@ -65,6 +70,11 @@ func Find(x float64, data ...Point) (y float64, err error) {
 	}
 
 	// check is X inside graph
+	if withOutside {
+		x0, y0 := data[len(data)-2].X, data[len(data)-2].Y
+		x1, y1 := data[len(data)-1].X, data[len(data)-1].Y
+		return y0 + (x-x0)/(x1-x0)*(y1-y0), nil
+	}
 	err = ErrorRange{
 		IsUpper: true,
 		X:       x,

@@ -11,15 +11,16 @@ func TestWrong(t *testing.T) {
 		x    float64
 		data []Point
 	}{
-		{0, []Point{}},
+		{+0, []Point{{0, 2}}},
+		{+0, []Point{}},
 		{+5, []Point{{-1, -2}, {1, 2}}},
 		{-5, []Point{{-1, -2}, {1, 2}}},
-		{0, []Point{{1, -2}, {-1, 2}}},
+		{+0, []Point{{1, -2}, {-1, 2}}},
 	}
 
 	for i := range tcs {
 		t.Run(fmt.Sprintf("%2d", i), func(t *testing.T) {
-			_, err := Find(tcs[i].x, tcs[i].data...)
+			_, err := Find(tcs[i].x, false, tcs[i].data...)
 			if err == nil {
 				t.Errorf("haven`t error")
 			} else {
@@ -31,17 +32,25 @@ func TestWrong(t *testing.T) {
 
 func Test(t *testing.T) {
 	type testCase struct {
-		x       float64
-		data    []Point
-		yExpect float64
+		x           float64
+		data        []Point
+		yExpect     float64
+		withOutside bool
 	}
 	tcs := []testCase{
-		{0, []Point{{0, 2}}, 2},
-		{0, []Point{{-1, -2}, {1, 2}}, 0},
-		{0, []Point{{-1, 0}, {1, 4}}, 2},
-		{1, []Point{{-1, 0}, {1, 4}}, 4},
-		{1.1, []Point{{-1, 0}, {1, 4}, {2, 10}}, 4 + 0.1*6},
-		{-1, []Point{{-1, 0}, {1, 4}}, 0},
+		{x: +0.0, data: []Point{{-1, -2}, {+1, +2}}, yExpect: 0},
+		{x: +0.0, data: []Point{{-1, +0}, {+1, +4}}, yExpect: 2},
+		{x: +1.0, data: []Point{{-1, +0}, {+1, +4}}, yExpect: 4},
+		{x: -1.0, data: []Point{{-1, +0}, {+1, +4}}, yExpect: 0},
+		{x: +1.1, data: []Point{{-1, +0}, {+1, +4}, {2, 10}}, yExpect: 4 + 0.1*6},
+		{x: +2.0, data: []Point{{-1, -1}, {+1, +1}}, yExpect: 2, withOutside: true},
+		{x: +2.0, data: []Point{{-10, -2}, {-1, -1}, {+1, +1}}, yExpect: 2, withOutside: true},
+		{x: -2.0, data: []Point{{-1, -1}, {+1, +1}}, yExpect: -2, withOutside: true},
+		{x: -2.0, data: []Point{{-1, -1}, {+1, +1}, {+100, +2}}, yExpect: -2, withOutside: true},
+		{x: +4.0, data: []Point{{-2, -1}, {+2, +1}}, yExpect: 2, withOutside: true},
+		{x: -4.0, data: []Point{{-2, -1}, {+2, +1}}, yExpect: -2, withOutside: true},
+		{x: +4.0, data: []Point{{-2, +0}, {+2, +2}}, yExpect: 3, withOutside: true},
+		{x: -4.0, data: []Point{{-2, +0}, {+2, +2}}, yExpect: -1, withOutside: true},
 	}
 
 	for iter := 0; iter < 2; iter++ {
@@ -50,18 +59,19 @@ func Test(t *testing.T) {
 			var t testCase
 			t.x, t.yExpect = tcs[i].yExpect, tcs[i].x
 			t.data = Swap(tcs[i].data...)
+			t.withOutside = tcs[i].withOutside
 			tcs = append(tcs, t)
 		}
 	}
 
 	for i := range tcs {
 		t.Run(fmt.Sprintf("%2d", i), func(t *testing.T) {
-			y, err := Find(tcs[i].x, tcs[i].data...)
+			y, err := Find(tcs[i].x, tcs[i].withOutside, tcs[i].data...)
 			if err != nil {
-				t.Errorf("haven`t error")
+				t.Fatalf("haven`t error: %v", err)
 			}
 			if math.Abs((y-tcs[i].yExpect)/y) > 1e-6 {
-				t.Errorf("not valid Y: %v", y)
+				t.Errorf("not valid Y: %v != %v", y, tcs[i].yExpect)
 			}
 		})
 	}
