@@ -17,6 +17,18 @@ func Swap(ps ...Point) (swap []Point) {
 	return
 }
 
+// Linear approximation
+func Linear(ps [2]Point) (f func(x float64) float64) {
+	dX := ps[1].X - ps[0].X
+	dY := ps[1].Y - ps[0].Y
+	if dX == 0 {
+		panic("not valid dX is zero")
+	}
+	return func(x float64) float64 {
+		return ps[0].Y + (x-ps[0].X)*dY/dX
+	}
+}
+
 // Find position Y by X in grapth dataset data.
 // Dataset shall by sorted by x.
 func Find(x float64, withOutside bool, data ...Point) (y float64, err error) {

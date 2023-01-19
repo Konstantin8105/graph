@@ -94,3 +94,23 @@ func TestErrorRange(t *testing.T) {
 		}
 	}
 }
+
+func TestLinear(t *testing.T){
+	ps := []Point {
+		{X: 1.1, Y: 2.1},
+		{X: 3.1, Y: 3.050101010101},
+	}
+	f := Linear([2]Point{ps[0], ps[1]})
+	for x := -0.5; x< 5; x += 0.2{
+		yl := f(x)
+		y, err := Find(x, true, ps...)
+		if err != nil {
+			t.Errorf("%v", err)
+		}
+		eps := math.Abs((yl-y)/y)
+		if 1e-6 < eps {
+			t.Fatalf("x=%.1f y: %.3f != %.3f", x, yl, y)
+		}
+		t.Logf("x=%4.1f y: %4.3f == %4.3f eps: %.3e", x, yl, y, eps)
+	}
+}
