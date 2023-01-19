@@ -95,22 +95,49 @@ func TestErrorRange(t *testing.T) {
 	}
 }
 
-func TestLinear(t *testing.T){
-	ps := []Point {
+func TestLinear(t *testing.T) {
+	ps := []Point{
 		{X: 1.1, Y: 2.1},
 		{X: 3.1, Y: 3.050101010101},
 	}
 	f := Linear([2]Point{ps[0], ps[1]})
-	for x := -0.5; x< 5; x += 0.2{
+	for x := -0.5; x < 5; x += 0.2 {
 		yl := f(x)
 		y, err := Find(x, true, ps...)
 		if err != nil {
 			t.Errorf("%v", err)
 		}
-		eps := math.Abs((yl-y)/y)
+		eps := math.Abs((yl - y) / y)
 		if 1e-6 < eps {
 			t.Fatalf("x=%.1f y: %.3f != %.3f", x, yl, y)
 		}
 		t.Logf("x=%4.1f y: %4.3f == %4.3f eps: %.3e", x, yl, y, eps)
+	}
+}
+
+func TestLogLog(t *testing.T) {
+	expect := func(x float64) float64 {
+		arg := -2.6181*math.Log10(x) + 6.333
+		y := math.Pow(10, math.Pow(10, arg)) - 1
+		return y
+	}
+	appr := LogLog([2]Point{
+		{X: 160 + 273, Y: expect(160 + 273)},
+		{X: 260 + 273, Y: expect(260 + 273)},
+	})
+	for x := 160 + 273.0; x < 260+273.0; x += 0.2 {
+		e := expect(x)
+		a := appr(x)
+		eps := math.Abs((a - e) / e)
+		if 1e-6 < eps {
+			t.Fatalf("x=%.1f y: %.3f != %.3f", x, a, e)
+		}
+		if math.IsNaN(a) {
+			t.Fatalf("x=%.1f y: %.3f != %.3f", x, a, e)
+		}
+		if math.IsInf(a, 0) {
+			t.Fatalf("x=%.1f y: %.3f != %.3f", x, a, e)
+		}
+		t.Logf("x=%4.1f y: %4.3f == %4.3f eps: %.3e", x, a, e, eps)
 	}
 }

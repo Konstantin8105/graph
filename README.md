@@ -8,8 +8,14 @@ package graph // import "github.com/Konstantin8105/graph"
 
 FUNCTIONS
 
-func Find(x float64, data ...Point) (y float64, err error)
-    Find position Y by X in grapth dataset data. Dataset must by sorted by x.
+func Find(x float64, withOutside bool, data ...Point) (y float64, err error)
+    Find position Y by X in grapth dataset data. Dataset shall by sorted by x.
+
+func Linear(ps [2]Point) (f func(x float64) float64)
+    Linear approximation by `y = a*X + b`
+
+func LogLog(ps [2]Point) (f func(x float64) float64)
+    LogLog approximation by `y = 10^(10^(a*Log10(x) + b))-1`
 
 
 TYPES
@@ -44,4 +50,7 @@ type Point struct {
 	X, Y float64
 }
     Point coordinates
+
+func Swap(ps ...Point) (swap []Point)
+    Swap points coordinates
 ```

@@ -1,6 +1,9 @@
 package graph
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 // Point coordinates
 type Point struct {
@@ -17,7 +20,7 @@ func Swap(ps ...Point) (swap []Point) {
 	return
 }
 
-// Linear approximation
+// Linear approximation by `y = a*X + b`
 func Linear(ps [2]Point) (f func(x float64) float64) {
 	dX := ps[1].X - ps[0].X
 	dY := ps[1].Y - ps[0].Y
@@ -27,6 +30,29 @@ func Linear(ps [2]Point) (f func(x float64) float64) {
 	return func(x float64) float64 {
 		return ps[0].Y + (x-ps[0].X)*dY/dX
 	}
+}
+
+// LogLog approximation by `y = 10^(10^(a*Log10(x) + b))-1`
+func LogLog(ps [2]Point) (f func(x float64) float64) {
+
+	var (
+		logX0    = math.Log10(ps[0].X)
+		loglogY0 = math.Log10(math.Log10(ps[0].Y + 1.0))
+		logX1    = math.Log10(ps[1].X)
+		loglogY1 = math.Log10(math.Log10(ps[1].Y + 1.0))
+	)
+
+	fl := Linear([2]Point{
+		{X: logX0, Y: loglogY0},
+		{X: logX1, Y: loglogY1},
+	})
+
+	return func(x float64) float64 {
+		y := fl(math.Log10(x))
+		return math.Pow(10, math.Pow(10, y)) - 1.0
+	}
+
+	return
 }
 
 // Find position Y by X in grapth dataset data.
