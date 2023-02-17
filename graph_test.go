@@ -141,3 +141,41 @@ func TestLogLog(t *testing.T) {
 		t.Logf("x=%4.1f y: %4.3f == %4.3f eps: %.3e", x, a, e, eps)
 	}
 }
+
+// cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+// Benchmark/1/5-8         	   50685	     23633 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/1/2-8         	   39688	     30165 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/4/5-8         	   31276	     38919 ns/op	       0 B/op	       0 allocs/op
+func Benchmark(b *testing.B) {
+	size := 10000
+	var ps []Point
+	for x := -10.0; x < 10.0; x += (20.0 / float64(size)) {
+		ps = append(ps, Point{X: x, Y: x * x})
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.Run("1/5", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			_, err := Find(-6.0, false, ps...)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
+	b.Run("1/2", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			_, err := Find(1e-6, false, ps...)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
+	b.Run("4/5", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			_, err := Find(+6.0, false, ps...)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
+}
