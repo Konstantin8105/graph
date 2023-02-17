@@ -143,9 +143,11 @@ func TestLogLog(t *testing.T) {
 }
 
 // cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
-// Benchmark/1/5-8         	   50685	     23633 ns/op	       0 B/op	       0 allocs/op
-// Benchmark/1/2-8         	   39688	     30165 ns/op	       0 B/op	       0 allocs/op
-// Benchmark/4/5-8         	   31276	     38919 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/-1/5-8         	   63352	     19874 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/5-8         	   48730	     23438 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/2-8         	   38374	     31590 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+4/5-8         	   32684	     36771 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+6/5-8         	   29103	     41493 ns/op	       0 B/op	       0 allocs/op
 func Benchmark(b *testing.B) {
 	size := 10000
 	var ps []Point
@@ -154,25 +156,41 @@ func Benchmark(b *testing.B) {
 	}
 	b.ReportAllocs()
 	b.ResetTimer()
-	b.Run("1/5", func(b *testing.B) {
+	b.Run("-1/5", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_, err := Find(-6.0, false, ps...)
+			_, err := Find(-12.0, true, ps...)
 			if err != nil {
 				panic(err)
 			}
 		}
 	})
-	b.Run("1/2", func(b *testing.B) {
+	b.Run("+1/5", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_, err := Find(1e-6, false, ps...)
+			_, err := Find(-6.0, true, ps...)
 			if err != nil {
 				panic(err)
 			}
 		}
 	})
-	b.Run("4/5", func(b *testing.B) {
+	b.Run("+1/2", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_, err := Find(+6.0, false, ps...)
+			_, err := Find(1e-6, true, ps...)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
+	b.Run("+4/5", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			_, err := Find(+6.0, true, ps...)
+			if err != nil {
+				panic(err)
+			}
+		}
+	})
+	b.Run("+6/5", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			_, err := Find(+12.0, true, ps...)
 			if err != nil {
 				panic(err)
 			}
