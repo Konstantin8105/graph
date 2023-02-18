@@ -55,9 +55,17 @@ func LogLog(ps [2]Point) (f func(x float64) float64) {
 	return
 }
 
+// Check is type of checking datasets
+type Check bool
+
+const (
+	CheckSorted   Check = true
+	NoCheckSorted Check = false
+)
+
 // Find position Y by X in grapth dataset data.
 // Dataset shall by sorted by x.
-func Find(x float64, withOutside bool, data ...Point) (y float64, err error) {
+func Find(x float64, withOutside bool, sort Check, data ...Point) (y float64, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("graph.Find error: %v", err)
@@ -65,13 +73,15 @@ func Find(x float64, withOutside bool, data ...Point) (y float64, err error) {
 	}()
 
 	// check input data
-	for i := range data {
-		if i == 0 {
-			continue
-		}
-		if data[i-1].X >= data[i].X {
-			err = ErrorDataset{Id: NotSorted}
-			return
+	if sort == CheckSorted {
+		for i := range data {
+			if i == 0 {
+				continue
+			}
+			if data[i-1].X >= data[i].X {
+				err = ErrorDataset{Id: NotSorted}
+				return
+			}
 		}
 	}
 	if len(data) < 2 {
@@ -91,32 +101,48 @@ func Find(x float64, withOutside bool, data ...Point) (y float64, err error) {
 		}
 		return
 	}
-
-	// find
-	for i := range data {
-		if x == data[i].X {
-			return data[i].Y, nil
-		}
-		if i == 0 {
-			continue
-		}
-		if data[i-1].X <= x && x <= data[i].X {
-			x0, y0 := data[i-1].X, data[i-1].Y
-			x1, y1 := data[i].X, data[i].Y
+	if x == data[0].X {
+		return data[0].Y, nil
+	}
+	if data[len(data)-1].X < x {
+		if withOutside {
+			x0, y0 := data[len(data)-2].X, data[len(data)-2].Y
+			x1, y1 := data[len(data)-1].X, data[len(data)-1].Y
 			return y0 + (x-x0)/(x1-x0)*(y1-y0), nil
 		}
+		err = ErrorRange{
+			IsUpper: true,
+			X:       x,
+		}
+		return
+	}
+	if x == data[len(data)-1].X {
+		return data[len(data)-1].Y, nil
+	}
+	// find
+	var get func(i, j int) (ok bool, y float64)
+	get = func(left, right int) (ok bool, y float64) {
+		if right-left < 1 {
+			return
+		}
+		if right-left == 1 {
+			x0, y0 := data[left].X, data[left].Y
+			x1, y1 := data[right].X, data[right].Y
+			return true, y0 + (x-x0)/(x1-x0)*(y1-y0)
+		}
+		mid := (left + right) / 2
+		if x <= data[mid].X {
+			right = mid
+		} else {
+			left = mid
+		}
+		return get(left, right)
+	}
+	if ok, y := get(0, len(data)-1); ok {
+		return y, nil
 	}
 
-	// check is X inside graph
-	if withOutside {
-		x0, y0 := data[len(data)-2].X, data[len(data)-2].Y
-		x1, y1 := data[len(data)-1].X, data[len(data)-1].Y
-		return y0 + (x-x0)/(x1-x0)*(y1-y0), nil
-	}
-	err = ErrorRange{
-		IsUpper: true,
-		X:       x,
-	}
+	err = ErrorDataset{Id: UndefinedData}
 	return
 }
 
@@ -143,6 +169,7 @@ type DatasetErrorValue int
 const (
 	NotSorted DatasetErrorValue = iota + 1
 	NotEnougthData
+	UndefinedData
 )
 
 // ErrorDataset is error of dataset identification
@@ -157,6 +184,8 @@ func (err ErrorDataset) Error() string {
 		return "dataset is not sorted"
 	case NotEnougthData:
 		return "not enought data in dataset"
+	case UndefinedData:
+		return "undefined dataset"
 	}
 	return fmt.Sprintf("not valid error data Id: %d", int(err.Id))
 }

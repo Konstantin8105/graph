@@ -20,7 +20,7 @@ func TestWrong(t *testing.T) {
 
 	for i := range tcs {
 		t.Run(fmt.Sprintf("%2d", i), func(t *testing.T) {
-			_, err := Find(tcs[i].x, false, tcs[i].data...)
+			_, err := Find(tcs[i].x, false, CheckSorted, tcs[i].data...)
 			if err == nil {
 				t.Errorf("haven`t error")
 			} else {
@@ -30,7 +30,7 @@ func TestWrong(t *testing.T) {
 	}
 }
 
-func Test(t *testing.T) {
+func TestData(t *testing.T) {
 	type testCase struct {
 		x           float64
 		data        []Point
@@ -65,13 +65,13 @@ func Test(t *testing.T) {
 	}
 
 	for i := range tcs {
-		t.Run(fmt.Sprintf("%2d", i), func(t *testing.T) {
-			y, err := Find(tcs[i].x, tcs[i].withOutside, tcs[i].data...)
+		t.Run(fmt.Sprintf("%04d", i), func(t *testing.T) {
+			y, err := Find(tcs[i].x, tcs[i].withOutside, CheckSorted, tcs[i].data...)
 			if err != nil {
 				t.Fatalf("haven`t error: %v", err)
 			}
 			if math.Abs((y-tcs[i].yExpect)/y) > 1e-6 {
-				t.Errorf("not valid Y: %v != %v", y, tcs[i].yExpect)
+				t.Fatalf("not valid Y: %v != %v", y, tcs[i].yExpect)
 			}
 		})
 	}
@@ -103,7 +103,7 @@ func TestLinear(t *testing.T) {
 	f := Linear([2]Point{ps[0], ps[1]})
 	for x := -0.5; x < 5; x += 0.2 {
 		yl := f(x)
-		y, err := Find(x, true, ps...)
+		y, err := Find(x, true, CheckSorted, ps...)
 		if err != nil {
 			t.Errorf("%v", err)
 		}
@@ -142,55 +142,101 @@ func TestLogLog(t *testing.T) {
 	}
 }
 
+func expectF(x float64) float64 {
+	return x*x + 1.1
+}
+
+func dataset() (ps []Point) {
+	size := 10000
+	for x := -10.0; x < 10.0; x += (20.0 / float64(size)) {
+		ps = append(ps, Point{X: x, Y: expectF(x)})
+	}
+	return
+}
+
+func TestBigDataset(t *testing.T) {
+	ps := dataset()
+	for x := -10.0; x < 10.0; x += 0.11 {
+		t.Run(fmt.Sprintf("%06.2f", x), func(t *testing.T) {
+			y, err := Find(x, true, CheckSorted, ps...)
+			if err != nil {
+				t.Fatalf("x=%e. %v", x, err)
+			}
+			if eps := math.Abs((y - expectF(x)) / y); 1e-6 < eps {
+				t.Errorf("precision x = %e y = [%e != %e]. eps = %e",
+					x, y, expectF(x), eps)
+			}
+		})
+	}
+}
+
 // cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
 // Benchmark/-1/5-8         	   63352	     19874 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+1/5-8         	   48730	     23438 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+1/2-8         	   38374	     31590 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+4/5-8         	   32684	     36771 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+6/5-8         	   29103	     41493 ns/op	       0 B/op	       0 allocs/op
+//
+// cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+// Benchmark/-1/5-8         	   74947	     15209 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/5-8         	   60488	     19031 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/2-8         	   63114	     19702 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+4/5-8         	   60438	     19063 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+6/5-8         	   77912	     15249 ns/op	       0 B/op	       0 allocs/op
+//
+// cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+// Benchmark/-1/5-8         	99403454	        12.10 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/5-8         	11367764	       103.6 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/2-8         	12548338	        95.78 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+4/5-8         	11909890	       105.2 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+6/5-8         	81059797	        15.51 ns/op	       0 B/op	       0 allocs/op
 func Benchmark(b *testing.B) {
-	size := 10000
-	var ps []Point
-	for x := -10.0; x < 10.0; x += (20.0 / float64(size)) {
-		ps = append(ps, Point{X: x, Y: x * x})
-	}
+	ps := dataset()
 	b.ReportAllocs()
 	b.ResetTimer()
 	b.Run("-1/5", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_, err := Find(-12.0, true, ps...)
+			_, err := Find(-12.0, true, NoCheckSorted, ps...)
 			if err != nil {
 				panic(err)
 			}
 		}
 	})
+	b.ReportAllocs()
+	b.ResetTimer()
 	b.Run("+1/5", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_, err := Find(-6.0, true, ps...)
+			_, err := Find(-6.0, true, NoCheckSorted, ps...)
 			if err != nil {
 				panic(err)
 			}
 		}
 	})
+	b.ReportAllocs()
+	b.ResetTimer()
 	b.Run("+1/2", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_, err := Find(1e-6, true, ps...)
+			_, err := Find(1e-6, true, NoCheckSorted, ps...)
 			if err != nil {
 				panic(err)
 			}
 		}
 	})
+	b.ReportAllocs()
+	b.ResetTimer()
 	b.Run("+4/5", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_, err := Find(+6.0, true, ps...)
+			_, err := Find(+6.0, true, NoCheckSorted, ps...)
 			if err != nil {
 				panic(err)
 			}
 		}
 	})
+	b.ReportAllocs()
+	b.ResetTimer()
 	b.Run("+6/5", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_, err := Find(+12.0, true, ps...)
+			_, err := Find(+12.0, true, NoCheckSorted, ps...)
 			if err != nil {
 				panic(err)
 			}
