@@ -190,56 +190,36 @@ func TestBigDataset(t *testing.T) {
 // Benchmark/+1/2-8         	12548338	        95.78 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+4/5-8         	11909890	       105.2 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+6/5-8         	81059797	        15.51 ns/op	       0 B/op	       0 allocs/op
+//
+// cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+// Benchmark/-1/5-8         	96414884	        12.68 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/5-8         	11853046	       105.3 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/2-8         	13053266	        93.78 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+4/5-8         	11500910	       103.5 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+6/5-8         	78748124	        15.08 ns/op	       0 B/op	       0 allocs/op
+//
 func Benchmark(b *testing.B) {
 	ps := dataset()
-	b.ReportAllocs()
-	b.ResetTimer()
-	b.Run("-1/5", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			_, err := Find(-12.0, true, NoCheckSorted, ps...)
-			if err != nil {
-				panic(err)
+	bcs := []struct {
+		name string
+		x    float64
+	}{
+		{"-1/5", -12.0},
+		{"+1/5", -6.0},
+		{"+1/2", 1e-6},
+		{"+4/5", +6.0},
+		{"+6/5", +12.0},
+	}
+	for i := range bcs {
+		b.ReportAllocs()
+		b.ResetTimer()
+		b.Run(bcs[i].name, func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				_, err := Find(bcs[i].x, true, NoCheckSorted, ps...)
+				if err != nil {
+					panic(err)
+				}
 			}
-		}
-	})
-	b.ReportAllocs()
-	b.ResetTimer()
-	b.Run("+1/5", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			_, err := Find(-6.0, true, NoCheckSorted, ps...)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-	b.ReportAllocs()
-	b.ResetTimer()
-	b.Run("+1/2", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			_, err := Find(1e-6, true, NoCheckSorted, ps...)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-	b.ReportAllocs()
-	b.ResetTimer()
-	b.Run("+4/5", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			_, err := Find(+6.0, true, NoCheckSorted, ps...)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
-	b.ReportAllocs()
-	b.ResetTimer()
-	b.Run("+6/5", func(b *testing.B) {
-		for n := 0; n < b.N; n++ {
-			_, err := Find(+12.0, true, NoCheckSorted, ps...)
-			if err != nil {
-				panic(err)
-			}
-		}
-	})
+		})
+	}
 }
