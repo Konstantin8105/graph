@@ -75,6 +75,26 @@ func LogLog(ps [2]Point) (f func(x float64) float64) {
 	// return func(x float64) float64 {
 	// 	return math.Pow(C2, math.Pow(x, a))-1
 	// }
+
+	// for performance
+	// y = 10^(10^(a*Log10(x) + b))-1
+	// y = 10^D-1
+	// D = 10^(a*Log10(x) + b)
+	// D = 10^(a*Log10(x)) * 10^b
+	// D = 10^(Log10(x)*a) * 10^b
+	// D = (10^Log10(x))^a * 10^b
+	// D = x^a * 10^b
+	// E = 10^b
+	// D = x^a * E
+	// y = 10^(x^a * E) - 1
+	//
+	// a := (loglogY1 - loglogY0) / (logX1 - logX0)
+	// b := loglogY1 - a*logX1
+	// E := math.Pow(10, b)
+	// return func(x float64) float64 {
+	// 	D := math.Pow(x, a) * E
+	// 	return math.Pow(10, D) - 1
+	// }
 }
 
 // Check is type of checking datasets
