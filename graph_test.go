@@ -126,19 +126,21 @@ func TestLogLog(t *testing.T) {
 		{X: 260 + 273, Y: expect(260 + 273)},
 	})
 	for x := 160 + 273.0; x < 260+273.0; x += 0.2 {
-		e := expect(x)
-		a := appr(x)
-		eps := math.Abs((a - e) / e)
-		if 1e-6 < eps {
-			t.Fatalf("x=%.1f y: %.3f != %.3f", x, a, e)
-		}
-		if math.IsNaN(a) {
-			t.Fatalf("x=%.1f y: %.3f != %.3f", x, a, e)
-		}
-		if math.IsInf(a, 0) {
-			t.Fatalf("x=%.1f y: %.3f != %.3f", x, a, e)
-		}
-		t.Logf("x=%4.1f y: %4.3f == %4.3f eps: %.3e", x, a, e, eps)
+		t.Run(fmt.Sprintf("%.1f", x), func(t *testing.T) {
+			e := expect(x)
+			a := appr(x)
+			eps := math.Abs((a - e) / e)
+			if 1e-6 < eps {
+				t.Fatalf("x=%.1f y: %.3f != %.3f", x, a, e)
+			}
+			if math.IsNaN(a) {
+				t.Fatalf("x=%.1f y: %.3f != %.3f", x, a, e)
+			}
+			if math.IsInf(a, 0) {
+				t.Fatalf("x=%.1f y: %.3f != %.3f", x, a, e)
+			}
+			t.Logf("x=%4.1f y: %4.3f == %4.3f eps: %.3e", x, a, e, eps)
+		})
 	}
 }
 
@@ -198,6 +200,13 @@ func TestBigDataset(t *testing.T) {
 // Benchmark/+4/5-8         	11500910	       103.5 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+6/5-8         	78748124	        15.08 ns/op	       0 B/op	       0 allocs/op
 //
+// cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+// Benchmark/-1/5-16     	100000000	        11.30 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/5-16     	13036677	        91.24 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+1/2-16     	14085202	        83.60 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+4/5-16     	13023190	        94.49 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/+6/5-16     	86749096	        13.74 ns/op	       0 B/op	       0 allocs/op
+//
 func Benchmark(b *testing.B) {
 	ps := dataset()
 	bcs := []struct {
@@ -221,5 +230,23 @@ func Benchmark(b *testing.B) {
 				}
 			}
 		})
+	}
+}
+
+// cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+// BenchmarkLogLog-16    	 4256602	       284.9 ns/op	       0 B/op	       0 allocs/op
+func BenchmarkLogLog(b *testing.B) {
+	expect := func(x float64) float64 {
+		arg := -2.6181*math.Log10(x) + 6.333
+		y := math.Pow(10, math.Pow(10, arg)) - 1
+		return y
+	}
+	appr := LogLog([2]Point{
+		{X: 160 + 273, Y: expect(160 + 273)},
+		{X: 260 + 273, Y: expect(260 + 273)},
+	})
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = appr(160 + 273.15)
 	}
 }
