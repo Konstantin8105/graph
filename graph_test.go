@@ -235,6 +235,7 @@ func Benchmark(b *testing.B) {
 
 // cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
 // BenchmarkLogLog-16    	 4256602	       284.9 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkLogLog-16    	 4799954	       239.5 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkLogLog(b *testing.B) {
 	expect := func(x float64) float64 {
 		arg := -2.6181*math.Log10(x) + 6.333

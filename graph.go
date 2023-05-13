@@ -42,14 +42,14 @@ func LogLog(ps [2]Point) (f func(x float64) float64) {
 	)
 
 	// valid algoritm for verification
-	fl := Linear([2]Point{
-		{X: logX0, Y: loglogY0},
-		{X: logX1, Y: loglogY1},
-	})
-	return func(x float64) float64 {
-		y := fl(math.Log10(x))
-		return math.Pow(10, math.Pow(10, y)) - 1.0
-	}
+	// fl := Linear([2]Point{
+	// 	{X: logX0, Y: loglogY0},
+	// 	{X: logX1, Y: loglogY1},
+	// })
+	// return func(x float64) float64 {
+	// 	y := fl(math.Log10(x))
+	// 	return math.Pow(10, math.Pow(10, y)) - 1.0
+	// }
 
 	// return func(x float64) float64 {
 	// 	return math.Pow(10, math.Pow(10, a*math.Log10(x)+b)) - 1.0
@@ -87,14 +87,13 @@ func LogLog(ps [2]Point) (f func(x float64) float64) {
 	// E = 10^b
 	// D = x^a * E
 	// y = 10^(x^a * E) - 1
-	//
-	// a := (loglogY1 - loglogY0) / (logX1 - logX0)
-	// b := loglogY1 - a*logX1
-	// E := math.Pow(10, b)
-	// return func(x float64) float64 {
-	// 	D := math.Pow(x, a) * E
-	// 	return math.Pow(10, D) - 1
-	// }
+	a := (loglogY1 - loglogY0) / (logX1 - logX0)
+	b := loglogY1 - a*logX1
+	E := math.Pow(10, b)
+	return func(x float64) float64 {
+		D := math.Pow(x, a) * E
+		return math.Pow(10, D) - 1
+	}
 }
 
 // Check is type of checking datasets
