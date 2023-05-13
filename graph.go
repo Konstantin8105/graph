@@ -41,16 +41,19 @@ func LogLog(ps [2]Point) (f func(x float64) float64) {
 		loglogY1 = math.Log10(math.Log10(ps[1].Y + 1.0))
 	)
 
+	// valid algoritm for verification
 	fl := Linear([2]Point{
 		{X: logX0, Y: loglogY0},
 		{X: logX1, Y: loglogY1},
 	})
-
-	// valid algoritm for verification
 	return func(x float64) float64 {
 		y := fl(math.Log10(x))
 		return math.Pow(10, math.Pow(10, y)) - 1.0
 	}
+
+	// return func(x float64) float64 {
+	// 	return math.Pow(10, math.Pow(10, a*math.Log10(x)+b)) - 1.0
+	// }
 
 	// for performance
 	// y = 10^(10^(a*Log10(x) + b))-1
@@ -64,6 +67,14 @@ func LogLog(ps [2]Point) (f func(x float64) float64) {
 	// y = (10^C1)^(x^a)-1
 	// C2 = 10^C1 = 10^10^b
 	// y = C2^(x^a)-1
+	//
+	// a := (loglogY1 - loglogY0) / (logX1 - logX0)
+	// b := loglogY1 - a*logX1
+	// fmt.Println(a, b)
+	// C2 := math.Pow(10, math.Pow(10, b))
+	// return func(x float64) float64 {
+	// 	return math.Pow(C2, math.Pow(x, a))-1
+	// }
 }
 
 // Check is type of checking datasets
