@@ -34,7 +34,6 @@ func Linear(ps [2]Point) (f func(x float64) float64) {
 
 // LogLog approximation by `y = 10^(10^(a*Log10(x) + b))-1`
 func LogLog(ps [2]Point) (f func(x float64) float64) {
-
 	var (
 		logX0    = math.Log10(ps[0].X)
 		loglogY0 = math.Log10(math.Log10(ps[0].Y + 1.0))
@@ -51,8 +50,6 @@ func LogLog(ps [2]Point) (f func(x float64) float64) {
 		y := fl(math.Log10(x))
 		return math.Pow(10, math.Pow(10, y)) - 1.0
 	}
-
-	return
 }
 
 // Check is type of checking datasets
