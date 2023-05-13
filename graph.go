@@ -46,10 +46,24 @@ func LogLog(ps [2]Point) (f func(x float64) float64) {
 		{X: logX1, Y: loglogY1},
 	})
 
+	// valid algoritm for verification
 	return func(x float64) float64 {
 		y := fl(math.Log10(x))
 		return math.Pow(10, math.Pow(10, y)) - 1.0
 	}
+
+	// for performance
+	// y = 10^(10^(a*Log10(x) + b))-1
+	// y = 10^(10^(a*Log10(x))*10^b)-1
+	// y = 10^(10^(Log10(x)*a)*10^b)-1
+	// y = 10^((10^Log10(x))^a*10^b)-1
+	// y = 10^(x^a*10^b)-1
+	// C1 = 10^b
+	// y = 10^(x^a*C1)-1
+	// y = 10^(C1*x^a)-1
+	// y = (10^C1)^(x^a)-1
+	// C2 = 10^C1 = 10^10^b
+	// y = C2^(x^a)-1
 }
 
 // Check is type of checking datasets
