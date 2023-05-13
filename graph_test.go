@@ -246,6 +246,7 @@ func BenchmarkLogLog(b *testing.B) {
 		{X: 160 + 273, Y: expect(160 + 273)},
 		{X: 260 + 273, Y: expect(260 + 273)},
 	})
+	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		_ = appr(160 + 273.15)
