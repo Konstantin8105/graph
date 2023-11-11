@@ -163,42 +163,43 @@ func Find(x float64, withOutside bool, sort Check, data ...Point) (y float64, er
 	// find
 
 	// old code:
-	// var get func(i, j int) (ok bool, y float64)
-	// get = func(left, right int) (ok bool, y float64) {
-	// 	if right-left < 1 {
-	// 		return
-	// 	}
-	// 	if right-left == 1 {
-	// 		x0, y0 := data[left].X, data[left].Y
-	// 		x1, y1 := data[right].X, data[right].Y
-	// 		return true, y0 + (x-x0)/(x1-x0)*(y1-y0)
-	// 	}
-	// 	mid := (left + right) / 2
-	// 	if x <= data[mid].X {
-	// 		right = mid
-	// 	} else {
-	// 		left = mid
-	// 	}
-	// 	return get(left, right)
-	// }
-	// if ok, y := get(0, len(data)-1); ok {
-	// 	return y, nil
-	// }
-
-	left, mid, right := 0, 0, len(data)-1
-	for left < right {
+	var get func(i, j int) (ok bool, y float64)
+	get = func(left, right int) (ok bool, y float64) {
+		if right-left < 1 {
+			return
+		}
 		if right-left == 1 {
 			x0, y0 := data[left].X, data[left].Y
 			x1, y1 := data[right].X, data[right].Y
-			return y0 + (x-x0)/(x1-x0)*(y1-y0), nil
+			return true, y0 + (x-x0)/(x1-x0)*(y1-y0)
 		}
-		mid = (left + right) / 2
+		mid := (left + right) / 2
 		if x <= data[mid].X {
 			right = mid
 		} else {
 			left = mid
 		}
+		return get(left, right)
 	}
+	if ok, y := get(0, len(data)-1); ok {
+		return y, nil
+	}
+
+	// new algo:
+	// left, mid, right := 0, 0, len(data)-1
+	// for left < right {
+	// 	if right-left == 1 {
+	// 		x0, y0 := data[left].X, data[left].Y
+	// 		x1, y1 := data[right].X, data[right].Y
+	// 		return y0 + (x-x0)/(x1-x0)*(y1-y0), nil
+	// 	}
+	// 	mid = (left + right) / 2
+	// 	if x <= data[mid].X {
+	// 		right = mid
+	// 	} else {
+	// 		left = mid
+	// 	}
+	// }
 
 	err = ErrorDataset{Id: UndefinedData}
 	return
