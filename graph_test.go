@@ -158,7 +158,7 @@ func dataset() (ps []Point) {
 
 func TestBigDataset(t *testing.T) {
 	ps := dataset()
-	for x := -10.0; x < 10.0; x += 0.001 {
+	for x := -10.0; x < 10.0; x += 0.0012 {
 		// t.Run(fmt.Sprintf("%06.2f", x), func(t *testing.T) {
 		y, err := Find(x, true, CheckSorted, ps...)
 		if err != nil {
@@ -218,6 +218,18 @@ func TestBigDataset(t *testing.T) {
 // Benchmark/+1/2-8    	25630789	        46.47 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+4/5-8    	23895999	        50.30 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+6/5-8    	93084987	        12.30 ns/op	       0 B/op	       0 allocs/op
+//
+// cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
+// Benchmark/Find-1/5-8         	41240526	        28.16 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/Find+1/5-8         	15268278	        69.50 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/Find+1/2-8         	17245395	        68.02 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/Find+4/5-8         	16446465	        71.86 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/Find+6/5-8         	26873926	        37.24 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/Appox-1/5-8        	131612073	         9.006 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/Appox+1/5-8        	24080991	        49.36 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/Appox+1/2-8        	22773793	        57.43 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/Appox+4/5-8        	24829455	        48.12 ns/op	       0 B/op	       0 allocs/op
+// Benchmark/Appox+6/5-8        	132755846	         8.735 ns/op	       0 B/op	       0 allocs/op
 func Benchmark(b *testing.B) {
 	ps := dataset()
 	bcs := []struct {
@@ -231,15 +243,34 @@ func Benchmark(b *testing.B) {
 		{"+6/5", +12.0},
 	}
 	for i := range bcs {
-		b.ReportAllocs()
-		b.ResetTimer()
-		b.Run(bcs[i].name, func(b *testing.B) {
+		b.Run("Find"+bcs[i].name, func(b *testing.B) {
+			var err error
+			b.ReportAllocs()
+			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				_, err := Find(bcs[i].x, true, NoCheckSorted, ps...)
+				_, err = Find(bcs[i].x, true, NoCheckSorted, ps...)
 				if err != nil {
 					panic(err)
 				}
 			}
+			_ = err
+		})
+	}
+	for i := range bcs {
+		b.Run("Appox"+bcs[i].name, func(b *testing.B) {
+			f, err := Approx(true, NoCheckSorted, ps...)
+			if err != nil {
+				b.Fatal(err)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				_, err = f(bcs[i].x)
+				if err != nil {
+					panic(err)
+				}
+			}
+			_ = err
 		})
 	}
 }
@@ -248,6 +279,7 @@ func Benchmark(b *testing.B) {
 // BenchmarkLogLog-16    	 4256602	       284.9 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkLogLog-16    	 4799954	       239.5 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkLogLog-8   	     4822491	       243.5 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkLogLog-8   	     4280361	       245.0 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkLogLog(b *testing.B) {
 	expect := func(x float64) float64 {
 		arg := -2.6181*math.Log10(x) + 6.333
