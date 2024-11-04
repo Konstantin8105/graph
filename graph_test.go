@@ -27,6 +27,19 @@ func TestWrong(t *testing.T) {
 				t.Logf("%v", err)
 			}
 		})
+		t.Run(fmt.Sprintf("%2d", i), func(t *testing.T) {
+			fx, err := Approx(false, CheckSorted, tcs[i].data...)
+			if err != nil {
+				t.Logf("%v", err)
+				return
+			}
+			_, err = fx(tcs[i].x)
+			if err == nil {
+				t.Errorf("haven`t error")
+			} else {
+				t.Logf("%v", err)
+			}
+		})
 	}
 }
 
@@ -158,18 +171,34 @@ func dataset() (ps []Point) {
 
 func TestBigDataset(t *testing.T) {
 	ps := dataset()
-	for x := -10.0; x < 10.0; x += 0.0012 {
-		// t.Run(fmt.Sprintf("%06.2f", x), func(t *testing.T) {
-		y, err := Find(x, true, CheckSorted, ps...)
+	t.Run("Find", func(t *testing.T) {
+		for x := -10.0; x < 10.0; x += 0.0012 {
+			y, err := Find(x, true, CheckSorted, ps...)
+			if err != nil {
+				t.Fatalf("x=%e. %v", x, err)
+			}
+			if eps := math.Abs((y - expectF(x)) / y); 1e-6 < eps {
+				t.Errorf("precision x = %e y = [%e != %e]. eps = %e",
+					x, y, expectF(x), eps)
+			}
+		}
+	})
+	t.Run("Approx", func(t *testing.T) {
+		fx, err := Approx(true, CheckSorted, ps...)
 		if err != nil {
-			t.Fatalf("x=%e. %v", x, err)
+			t.Fatal(err)
 		}
-		if eps := math.Abs((y - expectF(x)) / y); 1e-6 < eps {
-			t.Errorf("precision x = %e y = [%e != %e]. eps = %e",
-				x, y, expectF(x), eps)
+		for x := -10.0; x < 10.0; x += 0.0012 {
+			y, err := fx(x)
+			if err != nil {
+				t.Fatalf("x=%e. %v", x, err)
+			}
+			if eps := math.Abs((y - expectF(x)) / y); 1e-6 < eps {
+				t.Errorf("precision x = %e y = [%e != %e]. eps = %e",
+					x, y, expectF(x), eps)
+			}
 		}
-		// })
-	}
+	})
 }
 
 // cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
