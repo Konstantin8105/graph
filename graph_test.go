@@ -201,6 +201,66 @@ func TestBigDataset(t *testing.T) {
 	})
 }
 
+func DyDx() (y, dydx func(float64) float64, dataset [][3]float64) {
+	y = func(x float64) float64 {
+		return -0.24*x*x*x + 2*x*x - 5*x + 10
+	}
+	dydx = func(x float64) float64 {
+		return -0.72*x*x + 4*x - 5
+	}
+	for x := -1.0; x < +1.0; x += 0.01 {
+		dataset = append(dataset, [3]float64{x, y(x), dydx(x)})
+	}
+	return
+}
+
+func TestDyDx(t *testing.T) {
+	_, dydx, dataset := DyDx()
+	var ps []Point
+	for i := range dataset {
+		ps = append(ps, Point{X: dataset[i][0], Y: dataset[i][1]})
+	}
+	dx := 0.001
+	t.Run("Approx", func(t *testing.T) {
+		f, err := Approx(true, NoCheckSorted, ps...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for x := -0.5; x < +0.5; x += 0.001 {
+			y0, err := f(x)
+			if err != nil {
+				t.Fatal(err)
+			}
+			y1, err := f(x + dx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			dy := (y1 - y0) / dx
+			e := math.Abs((dy - dydx(x)) / dydx(x))
+			if 1e-2 < e {
+				t.Errorf("precision: %.3e %.3e. eps = %.3e", dy, dydx(x), e)
+			}
+		}
+	})
+	t.Run("Find", func(t *testing.T) {
+		for x := -0.5; x < +0.5; x += 0.001 {
+			y0, err := Find(x, true, NoCheckSorted, ps...)
+			if err != nil {
+				t.Fatal(err)
+			}
+			y1, err := Find(x+dx, true, NoCheckSorted, ps...)
+			if err != nil {
+				t.Fatal(err)
+			}
+			dy := (y1 - y0) / dx
+			e := math.Abs((dy - dydx(x)) / dydx(x))
+			if 1e-2 < e {
+				t.Errorf("precision: %.3e %.3e. eps = %.3e", dy, dydx(x), e)
+			}
+		}
+	})
+}
+
 // cpu: Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz
 // Benchmark/-1/5-8         	   63352	     19874 ns/op	       0 B/op	       0 allocs/op
 // Benchmark/+1/5-8         	   48730	     23438 ns/op	       0 B/op	       0 allocs/op
